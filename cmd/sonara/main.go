@@ -29,7 +29,13 @@ import (
 	"github.com/thewh1teagle/sonara/internal/whisper"
 )
 
+var version = "dev"
+
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "--version" {
+		fmt.Println(version)
+		return
+	}
 	if len(os.Args) < 3 {
 		fmt.Fprintf(os.Stderr, "usage: sonara <model.bin> <audio.wav>\n")
 		os.Exit(1)

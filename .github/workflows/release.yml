@@ -1,0 +1,87 @@
+name: Release Sonara
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version/tag (for example: v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || github.ref_name }}
+
+jobs:
+  create-release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: Sonara ${{ env.VERSION }}
+          generate_release_notes: true
+
+  build-and-upload:
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            goos: linux
+            goarch: amd64
+            artifact: sonara-linux-amd64
+          - runner: ubuntu-24.04-arm
+            goos: linux
+            goarch: arm64
+            artifact: sonara-linux-arm64
+          - runner: macos-14
+            goos: darwin
+            goarch: arm64
+            artifact: sonara-darwin-arm64
+          - runner: macos-15-intel
+            goos: darwin
+            goarch: amd64
+            artifact: sonara-darwin-amd64
+          - runner: windows-latest
+            goos: windows
+            goarch: amd64
+            artifact: sonara-windows-amd64.exe
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: astral-sh/setup-uv@v5
+      - name: Install Vulkan deps (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libvulkan-dev
+      - name: Install Vulkan deps (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: mingw-w64-x86_64-vulkan-devel mingw-w64-x86_64-gcc
+      - name: Add MinGW to PATH
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: echo "$env:RUNNER_TEMP\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+      - name: Download prebuilt whisper.cpp libs
+        run: uv run scripts/download-libs.py
+      - name: Build sonara
+        shell: bash
+        run: |
+          CGO_ENABLED=1 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
+          go build -o "${{ matrix.artifact }}" -ldflags "-X main.version=${VERSION}" ./cmd/sonara
+      - name: Upload binary to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${VERSION}" "${{ matrix.artifact }}" --clobber

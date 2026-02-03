@@ -7,7 +7,7 @@
 
 """Build whisper.cpp static libs for the current platform and optionally upload to a GitHub release."""
 
-import argparse, platform, re, shutil, tarfile
+import argparse, platform, shutil, tarfile
 from pathlib import Path
 
 import sh
@@ -18,10 +18,7 @@ WHISPER_REPO = "https://github.com/ggml-org/whisper.cpp.git"
 
 
 def get_whisper_commit() -> str:
-    text = (ROOT / "scripts/fetch-whisper-header.py").read_text()
-    m = re.search(r'WHISPER_COMMIT\s*=\s*"([^"]+)"', text)
-    assert m, "WHISPER_COMMIT not found in fetch-whisper-header.py"
-    return m.group(1)
+    return (ROOT / ".whisper-commit").read_text().strip()
 
 
 def platform_id() -> str:
@@ -104,7 +101,7 @@ def upload(archive: Path, tag: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Build whisper.cpp static libs")
-    parser.add_argument("--tag", help="GitHub release tag to upload to")
+    parser.add_argument("--upload", action="store_true", help="Upload to GitHub release (tag derived from commit)")
     args = parser.parse_args()
 
     commit = get_whisper_commit()
@@ -120,8 +117,9 @@ def main():
     build(src_dir, build_dir)
     package(build_dir, src_dir, archive)
 
-    if args.tag:
-        upload(archive, args.tag)
+    if args.upload:
+        tag = f"libraries-{commit[:7]}"
+        upload(archive, tag)
 
 
 if __name__ == "__main__":

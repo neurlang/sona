@@ -1,6 +1,6 @@
 *.wav
 .DS_Store
-third_party/**/lib/
+third_party/lib/
 models/
 samples/
 sonara

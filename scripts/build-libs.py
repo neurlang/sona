@@ -101,9 +101,18 @@ def package(build_dir: Path, src_dir: Path, archive: Path):
 
 
 def upload(archive: Path, tag: str):
+    import time
     # Release may already exist from another matrix job — ignore error
     subprocess.run(["gh", "release", "create", tag, "--generate-notes"], check=False)
-    run("gh", "release", "upload", tag, str(archive), "--clobber")
+    # Retry upload — release may take a moment to become available
+    for attempt in range(5):
+        result = subprocess.run(["gh", "release", "upload", tag, str(archive), "--clobber"])
+        if result.returncode == 0:
+            break
+        print(f"upload attempt {attempt + 1} failed, retrying...")
+        time.sleep(3)
+    else:
+        raise RuntimeError(f"failed to upload {archive.name} after 5 attempts")
     print(f"uploaded {archive.name} to release {tag}")
 
 

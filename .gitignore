@@ -4,6 +4,7 @@ third_party/lib/
 models/
 samples/
 sonara
+!sonara/
 whisper.cpp/
 whisper-src/
 whisper-build/

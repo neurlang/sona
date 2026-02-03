@@ -82,6 +82,7 @@ jobs:
           CGO_ENABLED=1 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
           go build -o "${{ matrix.artifact }}" -ldflags "-X main.version=${VERSION}" ./cmd/sonara
       - name: Upload binary to release
+        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${VERSION}" "${{ matrix.artifact }}" --clobber
+        run: gh release upload "$env:VERSION" "${{ matrix.artifact }}" --clobber

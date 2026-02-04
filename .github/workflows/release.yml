@@ -38,27 +38,27 @@ jobs:
             goos: linux
             goarch: amd64
             binary: sonara-linux-amd64
-            archive: sonara-linux-amd64.tar.gz
+            archive: sonara-linux-amd64-with-ffmpeg.tar.gz
           - runner: ubuntu-24.04-arm
             goos: linux
             goarch: arm64
             binary: sonara-linux-arm64
-            archive: sonara-linux-arm64.tar.gz
+            archive: sonara-linux-arm64-with-ffmpeg.tar.gz
           - runner: macos-14
             goos: darwin
             goarch: arm64
             binary: sonara-darwin-arm64
-            archive: sonara-darwin-arm64.tar.gz
+            archive: sonara-darwin-arm64-with-ffmpeg.tar.gz
           - runner: macos-15-intel
             goos: darwin
             goarch: amd64
             binary: sonara-darwin-amd64
-            archive: sonara-darwin-amd64.tar.gz
+            archive: sonara-darwin-amd64-with-ffmpeg.tar.gz
           - runner: windows-latest
             goos: windows
             goarch: amd64
             binary: sonara-windows-amd64.exe
-            archive: sonara-windows-amd64.zip
+            archive: sonara-windows-amd64-with-ffmpeg.zip
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -104,3 +104,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$env:VERSION" "${{ matrix.archive }}" --clobber
+      - name: Upload raw binary to release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$env:VERSION" "${{ matrix.binary }}" --clobber

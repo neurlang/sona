@@ -18,19 +18,19 @@ jobs:
       matrix:
         include:
           - runner: ubuntu-24.04
-            archive: sonara-linux-amd64.tar.gz
+            archive: sonara-linux-amd64-with-ffmpeg.tar.gz
             binary: sonara
           - runner: ubuntu-24.04-arm
-            archive: sonara-linux-arm64.tar.gz
+            archive: sonara-linux-arm64-with-ffmpeg.tar.gz
             binary: sonara
           - runner: macos-14
-            archive: sonara-darwin-arm64.tar.gz
+            archive: sonara-darwin-arm64-with-ffmpeg.tar.gz
             binary: sonara
           - runner: macos-15-intel
-            archive: sonara-darwin-amd64.tar.gz
+            archive: sonara-darwin-amd64-with-ffmpeg.tar.gz
             binary: sonara
           - runner: windows-latest
-            archive: sonara-windows-amd64.zip
+            archive: sonara-windows-amd64-with-ffmpeg.zip
             binary: sonara.exe
     runs-on: ${{ matrix.runner }}
     env:

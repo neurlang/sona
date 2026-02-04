@@ -87,6 +87,7 @@ jobs:
           CGO_ENABLED=1 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
           go build -o "${{ matrix.binary }}" -ldflags "-X main.version=${VERSION}" ./cmd/sonara
       - name: Package release bundle with ffmpeg
+        shell: bash
         run: |
           uv run scripts/package-release.py \
             --binary "${{ matrix.binary }}" \

@@ -16,3 +16,4 @@ whisper-build/
 *.exe
 *.zip
 *.dll
+*.bin

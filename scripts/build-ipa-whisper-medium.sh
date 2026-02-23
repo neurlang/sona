@@ -77,3 +77,11 @@ cmake --build build -j --config Release
 ./build/bin/whisper-cli -f samples/jfk.wav
 
 cd ..
+
+
+echo "Installing binaries...."
+sudo cp whisper.cpp/build/src/libwhisper.so* /usr/local/lib/
+sudo cp whisper.cpp/build/ggml/src/libggml*.so* /usr/local/lib/
+sudo cp whisper.cpp/build/src/libwhisper.so* /usr/local/lib/
+sudo cp whisper.cpp/build/ggml/src/libggml*.so* /usr/local/lib/
+sudo ldconfig

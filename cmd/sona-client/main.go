@@ -17,7 +17,6 @@ import (
 	"github.com/go-audio/wav"
 )
 
-
 // recordFromMicrophone captures audio from the default microphone and saves it as a WAV file
 func recordFromMicrophone() (string, error) {
 	// Create a temporary file
@@ -63,7 +62,7 @@ func recordFromMicrophone() (string, error) {
 	captureCallbacks := malgo.DeviceCallbacks{
 		Data: onRecvFrames,
 	}
-	
+
 	device, err := malgo.InitDevice(ctx.Context, deviceConfig, captureCallbacks)
 	if err != nil {
 		return "", fmt.Errorf("failed to initialize device: %v", err)
@@ -82,7 +81,7 @@ func recordFromMicrophone() (string, error) {
 	go func() {
 		fmt.Scanln()
 		close(stopRecording)
-		
+
 		// Give a moment for the last samples to be processed
 		time.Sleep(100 * time.Millisecond)
 		device.Stop()
@@ -139,21 +138,24 @@ func main() {
 	// Define command line flags
 	port := flag.String("port", "36055", "Port number for the API server")
 	filePath := flag.String("file", "", "Path to the WAV file")
+	forever := flag.Bool("forever", false, "Run forever")
 	flag.Parse()
+
+again:
 
 	// If no file specified, record from microphone
 	if *filePath == "" {
 		// Wait for Enter to start
 		fmt.Print("[Press Enter to start recording]")
 		fmt.Scanln()
-		
+
 		// Record from microphone
 		recordedFile, err := recordFromMicrophone()
 		if err != nil {
 			return
 		}
 		defer os.Remove(recordedFile) // Clean up temp file
-		
+
 		*filePath = recordedFile
 		//fmt.Printf("Recording saved to temp file: %s\n", recordedFile)
 	}
@@ -181,7 +183,7 @@ func main() {
 		fmt.Printf("Error creating form file: %v\n", err)
 		return
 	}
-	
+
 	// Copy the file content to the multipart section
 	_, err = io.Copy(fileWriter, file)
 	if err != nil {
@@ -240,5 +242,10 @@ func main() {
 	} else {
 		fmt.Println("Error: 'text' field not found in response")
 		fmt.Printf("Full response: %s\n", string(responseBody))
+	}
+
+	if forever != nil && *forever {
+		*filePath = ""
+		goto again
 	}
 }

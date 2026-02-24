@@ -3,15 +3,15 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"strings"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/gen2brain/malgo"
 	"github.com/go-audio/audio"
@@ -20,10 +20,10 @@ import (
 
 type RecordedSamples struct {
 	capturedSamples []int
-	mut sync.Mutex
-	capturedText string
-
+	mut             sync.Mutex
+	capturedText    string
 }
+
 func (r *RecordedSamples) GetText() (str string) {
 	r.mut.Lock()
 	str = r.capturedText
@@ -47,8 +47,9 @@ func (r *RecordedSamples) Clear() {
 	r.capturedSamples = nil
 	r.mut.Unlock()
 }
+
 // recordFromMicrophone captures audio from the default microphone and saves it as a WAV file
-func (r *RecordedSamples) RecordFromMicrophone(stop chan struct{}, hangup func()) (string, error) {
+func (r *RecordedSamples) RecordFromMicrophone(stop chan struct{}) (string, error) {
 	// Create a temporary file
 	tmpFile, err := os.CreateTemp("", "recording-*.wav")
 	if err != nil {
@@ -95,22 +96,21 @@ func (r *RecordedSamples) RecordFromMicrophone(stop chan struct{}, hangup func()
 						// Little-endian int16 to int
 						value := int(int16(pSample[i+int(parity)]) | int16(pSample[i+1-int(parity)])<<8)
 						r.capturedSamples = append(r.capturedSamples, value)
-						sos += uint64(value*value)
+						sos += uint64(value * value)
 						cnt++
 					}
 				}
 				r.mut.Unlock()
-				if sos / cnt < 111111 {
+				if sos/cnt < 111111 {
 					consecutive++
 					if consecutive == 100 {
 						stop <- struct{}{}
-						hangup()
 					}
 				} else {
 					consecutive = 0
 				}
 				if sos/cnt > max {
-					max = sos/cnt
+					max = sos / cnt
 				}
 			}
 			parity ^= byte(len(pSample) & 1)
@@ -137,7 +137,7 @@ func (r *RecordedSamples) RecordFromMicrophone(stop chan struct{}, hangup func()
 
 	// Wait for Enter in a goroutine
 	go func() {
-		<- stop
+		<-stop
 		close(stopRecording)
 
 		// Give a moment for the last samples to be processed
@@ -193,15 +193,17 @@ again:
 	// If no file specified, record from microphone
 	if filePath == "" {
 		// Wait for Enter to start
-		<- start
+		<-start
 
 		// Record from microphone
-		recordedFile, err := r.RecordFromMicrophone(stop, hangup)
+		recordedFile, err := r.RecordFromMicrophone(stop)
 		if err != nil {
 			return
 		}
 
 		r.Clear()
+
+		hangup()
 
 		filePath = recordedFile
 		//fmt.Printf("Recording saved to temp file: %s\n", recordedFile)
@@ -211,7 +213,6 @@ again:
 		r.mut.Lock()
 		r.capturedText = "Transcribing..."
 		r.mut.Unlock()
-
 
 		// Construct the base URL with configurable host and port
 		baseURL := fmt.Sprintf("http://%s:%s", host, port)
@@ -298,7 +299,6 @@ again:
 			r.mut.Unlock()
 
 			textCallback(txt)
-
 
 		} else {
 			fmt.Println("Error: 'text' field not found in response")

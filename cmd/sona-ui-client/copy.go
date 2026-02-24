@@ -30,7 +30,6 @@ func (c *Copy) Close() error {
 	return c.file.Close()
 }
 
-
 func (c *Copy) HandleDataSourceAction(_ wl.DataSourceActionEvent) {
 }
 func (c *Copy) HandleDataSourceTarget(_ wl.DataSourceTargetEvent) {

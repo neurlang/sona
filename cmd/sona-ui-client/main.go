@@ -48,6 +48,7 @@ type smoke struct {
 	rs          *RecordedSamples
 	start, stop chan struct{}
 	entered     atomic.Bool
+	transcribin atomic.Bool
 	fontSize    byte
 	input       *window.Input
 }
@@ -235,7 +236,9 @@ func (smoke *smoke) Motion(
 		smoke.input = input
 	}
 
-	smoke.Enter(nil, nil, x, y)
+	if !smoke.transcribin.Load() {
+		smoke.Enter(nil, nil, x, y)
+	}
 	return window.CursorHand1
 }
 
@@ -382,8 +385,10 @@ func main() {
 	go smoke.rs.Run("Click to record, press any key to transcribe. IPA is automatically copied.",
 		*host, *port, *filePath, *forever, smoke.start, smoke.stop, func() {
 			smoke.entered.Store(false)
+			smoke.transcribin.Store(true)
 		}, func(text string) {
 			smoke.copyToClipboard(text)
+			smoke.transcribin.Store(false)
 		})
 
 	smoke.widget.SetUserDataWidgetHandler(&smoke)

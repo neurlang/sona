@@ -302,6 +302,7 @@ func (smoke *smoke) free() {
 func main() {
 
 	// Define command line flags
+	host := flag.String("host", "127.0.0.1", "Host address for the API server")
 	port := flag.String("port", "36055", "Port number for the API server")
 	filePath := flag.String("file", "", "Path to the WAV file")
 	forever := flag.Bool("forever", false, "Run forever")
@@ -332,7 +333,7 @@ func main() {
 	smoke.fontSize = 16
 
 	go smoke.rs.Run("Click to record, press any key to transcribe. IPA is automatically copied.",
-			*port, *filePath, *forever, smoke.start, smoke.stop, func() {
+			*host, *port, *filePath, *forever, smoke.start, smoke.stop, func() {
 		smoke.entered.Store(false)
 	})
 

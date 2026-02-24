@@ -183,7 +183,7 @@ func saveAsWAV(filename string, samples []int, sampleRate int) error {
 	return encoder.Write(audioBuf)
 }
 
-func (r *RecordedSamples) Run(helptext, port string, filePath string, forever bool, start, stop chan struct{}, hangup func()) {
+func (r *RecordedSamples) Run(helptext, host, port string, filePath string, forever bool, start, stop chan struct{}, hangup func()) {
 
 	r.mut.Lock()
 	r.capturedText = helptext
@@ -209,8 +209,8 @@ again:
 
 	go func(filePath string) {
 
-		// Construct the base URL with configurable port
-		baseURL := fmt.Sprintf("http://127.0.0.1:%s", port)
+		// Construct the base URL with configurable host and port
+		baseURL := fmt.Sprintf("http://%s:%s", host, port)
 		apiEndpoint := "/v1/audio/transcriptions"
 		fullURL := baseURL + apiEndpoint
 

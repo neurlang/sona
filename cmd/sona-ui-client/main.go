@@ -125,7 +125,7 @@ func render(smoke *smoke, surface cairo.Surface) {
 			var a = byte(0x33)
 
 			if !smoke.entered.Load() {
-				a = 0
+				a = 0x55
 			}
 
 			if dst8 != nil {

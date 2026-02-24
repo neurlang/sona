@@ -307,6 +307,27 @@ func (smoke *smoke) free() {
 	smoke.rs = nil
 }
 
+func (smoke *smoke) copyToClipboard(text string) {
+	if smoke.display == nil {
+		return
+	}
+	
+	input := smoke.window.GetInput()
+	if input == nil {
+		return
+	}
+	
+	src, err := smoke.display.CreateDataSource()
+	if err != nil {
+		return
+	}
+	
+	src.Offer("UTF8_STRING")
+	src.Offer("text/plain;charset=utf-8")
+	src.AddListener(&Copy{Text: text})
+	input.DeviceSetSelection(src, smoke.display.GetSerial())
+}
+
 func main() {
 
 	// Define command line flags
@@ -343,6 +364,8 @@ func main() {
 	go smoke.rs.Run("Click to record, press any key to transcribe. IPA is automatically copied.",
 			*host, *port, *filePath, *forever, smoke.start, smoke.stop, func() {
 		smoke.entered.Store(false)
+	}, func(text string) {
+		smoke.copyToClipboard(text)
 	})
 
 	smoke.widget.SetUserDataWidgetHandler(&smoke)

@@ -183,7 +183,7 @@ func saveAsWAV(filename string, samples []int, sampleRate int) error {
 	return encoder.Write(audioBuf)
 }
 
-func (r *RecordedSamples) Run(helptext, host, port string, filePath string, forever bool, start, stop chan struct{}, hangup func()) {
+func (r *RecordedSamples) Run(helptext, host, port string, filePath string, forever bool, start, stop chan struct{}, hangup func(), textCallback func(string)) {
 
 	r.mut.Lock()
 	r.capturedText = helptext
@@ -292,9 +292,14 @@ again:
 		// Extract and print only the text field
 		if text, ok := result["text"]; ok {
 			r.mut.Lock()
-			r.capturedText = strings.TrimSpace(text.(string))
-			println(r.capturedText)
+			txt := strings.TrimSpace(text.(string))
+			r.capturedText = txt
+			println(txt)
 			r.mut.Unlock()
+
+			textCallback(txt)
+
+
 		} else {
 			fmt.Println("Error: 'text' field not found in response")
 			fmt.Printf("Full response: %s\n", string(responseBody))

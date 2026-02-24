@@ -104,6 +104,11 @@ func render(smoke *smoke, surface cairo.Surface) {
 
 	data := smoke.rs.GetLastSamples(width * stretch)
 
+	var a = byte(0x33)
+
+	if !smoke.entered.Load() {
+		a = 0x55
+	}
 	for y := 0; y < height; y++ {
 		var yy = (int(32768) * y / int(smoke.smallheight)) - 16384
 		for x := 0; x < width; x++ {
@@ -122,11 +127,6 @@ func render(smoke *smoke, surface cairo.Surface) {
 				}
 			}
 
-			var a = byte(0x33)
-
-			if !smoke.entered.Load() {
-				a = 0x55
-			}
 
 			if dst8 != nil {
 				dst8[4*x+y*stride+0] = byte(c)

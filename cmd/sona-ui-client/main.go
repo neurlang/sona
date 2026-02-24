@@ -23,6 +23,7 @@ package main
 
 import "time"
 import "math/rand"
+import "os"
 import (
 	"sync/atomic"
 	"flag"
@@ -135,13 +136,15 @@ func render(smoke *smoke, surface cairo.Surface) {
 
 	ctx := makeContextFromCairo(surface)
 
-	ctx.SetColor(color.NRGBA{R: 0, G: 0, B: 0, A: 255})
-	ctx.Fill()
 
-	// Load DejaVu Sans from system fonts
-	err := ctx.LoadFontFace("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", float64(smoke.fontSize))
+	// Load system font (macOS uses Helvetica, Linux uses DejaVu Sans)
+	fontPath := "/System/Library/Fonts/Helvetica.ttc"
+	if _, err := os.Stat(fontPath); os.IsNotExist(err) {
+		fontPath = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+	}
+	err := ctx.LoadFontFace(fontPath, float64(smoke.fontSize))
 	if err != nil {
-		println(err.Error())
+		// Silently continue without font
 	}
 
 	ctx.SetColor(color.NRGBA{R: 255, G: 255, B: 255, A: 255})

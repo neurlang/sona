@@ -247,10 +247,6 @@ func (smoke *smoke) Motion(
 		smoke.input = input
 		smoke.inputMut.Unlock()
 	}
-
-	if !smoke.transcribin.Load() {
-		smoke.Enter(nil, nil, x, y)
-	}
 	return window.CursorHand1
 }
 

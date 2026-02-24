@@ -8,7 +8,7 @@ require (
 	github.com/gen2brain/malgo v0.11.24
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.1.0
-	github.com/neurlang/wayland v0.4.1-0.20260224064147-b8717e9eb5ae
+	github.com/neurlang/wayland v0.4.1-0.20260224135942-649731b29334
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/sys v0.41.0
 )

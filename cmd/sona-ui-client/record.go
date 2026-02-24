@@ -208,6 +208,10 @@ again:
 	}
 
 	go func(filePath string) {
+		r.mut.Lock()
+		r.capturedText = "Transcribing..."
+		r.mut.Unlock()
+
 
 		// Construct the base URL with configurable host and port
 		baseURL := fmt.Sprintf("http://%s:%s", host, port)

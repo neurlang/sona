@@ -25,10 +25,10 @@ import "time"
 import "math/rand"
 import "os"
 import (
-	"sync/atomic"
 	"flag"
 	"image"
 	"image/color"
+	"sync/atomic"
 )
 import cairo "github.com/neurlang/wayland/cairoshim"
 import "github.com/neurlang/wayland/wl"
@@ -49,8 +49,8 @@ type smoke struct {
 	start, stop chan struct{}
 	entered     atomic.Bool
 	fontSize    byte
+	input       *window.Input
 }
-
 
 const maxx = 512
 const maxy = 256
@@ -136,7 +136,6 @@ func render(smoke *smoke, surface cairo.Surface) {
 
 	ctx := makeContextFromCairo(surface)
 
-
 	// Load system font with IPA support
 	// On macOS, try fonts with good Unicode/IPA coverage
 	fontPath := "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
@@ -175,7 +174,7 @@ func (smoke *smoke) Redraw(widget *window.Widget) {
 }
 func (smoke *smoke) Key(
 	_ *window.Window,
-	_ *window.Input,
+	input *window.Input,
 	time uint32,
 	key uint32,
 	notUnicode uint32,
@@ -184,7 +183,9 @@ func (smoke *smoke) Key(
 ) {
 	println(notUnicode)
 
-
+	if input != nil {
+		smoke.input = input
+	}
 
 	if notUnicode == xkb.KeyQ || notUnicode == xkb.KEYq {
 		smoke.free()
@@ -193,11 +194,16 @@ func (smoke *smoke) Key(
 		smoke.Leave(nil, nil)
 	}
 }
-func (*smoke) Focus(_ *window.Window, _ *window.Input) {
-
+func (smoke *smoke) Focus(_ *window.Window, input *window.Input) {
+	if input != nil {
+		smoke.input = input
+	}
 }
-func (smoke *smoke) Enter(_ *window.Widget, _ *window.Input, x float32, y float32) {
+func (smoke *smoke) Enter(_ *window.Widget, input *window.Input, x float32, y float32) {
 
+	if input != nil {
+		smoke.input = input
+	}
 
 	if !smoke.entered.Load() {
 		smoke.entered.Store(true)
@@ -205,8 +211,11 @@ func (smoke *smoke) Enter(_ *window.Widget, _ *window.Input, x float32, y float3
 	}
 
 }
-func (smoke *smoke) Leave(_ *window.Widget, _ *window.Input) {
+func (smoke *smoke) Leave(_ *window.Widget, input *window.Input) {
 
+	if input != nil {
+		smoke.input = input
+	}
 
 	if smoke.entered.Load() {
 		smoke.entered.Store(false)
@@ -217,11 +226,15 @@ func (smoke *smoke) Leave(_ *window.Widget, _ *window.Input) {
 
 func (smoke *smoke) Motion(
 	_ *window.Widget,
-	_ *window.Input,
+	input *window.Input,
 	time uint32,
 	x float32,
 	y float32,
 ) int {
+	if input != nil {
+		smoke.input = input
+	}
+
 	smoke.Enter(nil, nil, x, y)
 	return window.CursorHand1
 }
@@ -279,7 +292,9 @@ func (smoke *smoke) Axis(
 	axis uint32,
 	value float32,
 ) {
-
+	if input != nil {
+		smoke.input = input
+	}
 	if value < 0 {
 		smoke.fontSize++
 	} else {
@@ -309,19 +324,22 @@ func (smoke *smoke) free() {
 
 func (smoke *smoke) copyToClipboard(text string) {
 	if smoke.display == nil {
+		println("no display")
 		return
 	}
-	
-	input := smoke.window.GetInput()
+
+	input := smoke.input
 	if input == nil {
+		println("no input")
 		return
 	}
-	
+
 	src, err := smoke.display.CreateDataSource()
 	if err != nil {
+		println(err.Error())
 		return
 	}
-	
+
 	src.Offer("UTF8_STRING")
 	src.Offer("text/plain;charset=utf-8")
 	src.AddListener(&Copy{Text: text})
@@ -362,11 +380,11 @@ func main() {
 	smoke.fontSize = 16
 
 	go smoke.rs.Run("Click to record, press any key to transcribe. IPA is automatically copied.",
-			*host, *port, *filePath, *forever, smoke.start, smoke.stop, func() {
-		smoke.entered.Store(false)
-	}, func(text string) {
-		smoke.copyToClipboard(text)
-	})
+		*host, *port, *filePath, *forever, smoke.start, smoke.stop, func() {
+			smoke.entered.Store(false)
+		}, func(text string) {
+			smoke.copyToClipboard(text)
+		})
 
 	smoke.widget.SetUserDataWidgetHandler(&smoke)
 

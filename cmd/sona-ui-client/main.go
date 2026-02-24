@@ -28,6 +28,7 @@ import (
 	"flag"
 	"image"
 	"image/color"
+	"sync"
 	"sync/atomic"
 )
 import cairo "github.com/neurlang/wayland/cairoshim"
@@ -51,6 +52,7 @@ type smoke struct {
 	transcribin atomic.Bool
 	fontSize    byte
 	input       *window.Input
+	inputMut    sync.Mutex
 }
 
 const maxx = 512
@@ -185,7 +187,9 @@ func (smoke *smoke) Key(
 	println(notUnicode)
 
 	if input != nil {
+		smoke.inputMut.Lock()
 		smoke.input = input
+		smoke.inputMut.Unlock()
 	}
 
 	if notUnicode == xkb.KeyQ || notUnicode == xkb.KEYq {
@@ -197,13 +201,17 @@ func (smoke *smoke) Key(
 }
 func (smoke *smoke) Focus(_ *window.Window, input *window.Input) {
 	if input != nil {
+		smoke.inputMut.Lock()
 		smoke.input = input
+		smoke.inputMut.Unlock()
 	}
 }
 func (smoke *smoke) Enter(_ *window.Widget, input *window.Input, x float32, y float32) {
 
 	if input != nil {
+		smoke.inputMut.Lock()
 		smoke.input = input
+		smoke.inputMut.Unlock()
 	}
 
 	if !smoke.entered.Load() {
@@ -215,7 +223,9 @@ func (smoke *smoke) Enter(_ *window.Widget, input *window.Input, x float32, y fl
 func (smoke *smoke) Leave(_ *window.Widget, input *window.Input) {
 
 	if input != nil {
+		smoke.inputMut.Lock()
 		smoke.input = input
+		smoke.inputMut.Unlock()
 	}
 
 	if smoke.entered.Load() {
@@ -233,7 +243,9 @@ func (smoke *smoke) Motion(
 	y float32,
 ) int {
 	if input != nil {
+		smoke.inputMut.Lock()
 		smoke.input = input
+		smoke.inputMut.Unlock()
 	}
 
 	if !smoke.transcribin.Load() {
@@ -296,7 +308,9 @@ func (smoke *smoke) Axis(
 	value float32,
 ) {
 	if input != nil {
+		smoke.inputMut.Lock()
 		smoke.input = input
+		smoke.inputMut.Unlock()
 	}
 	if value < 0 {
 		smoke.fontSize++
@@ -330,8 +344,9 @@ func (smoke *smoke) copyToClipboard(text string) {
 		println("no display")
 		return
 	}
-
+	smoke.inputMut.Lock()
 	input := smoke.input
+	smoke.inputMut.Unlock()
 	if input == nil {
 		println("no input")
 		return

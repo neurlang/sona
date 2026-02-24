@@ -134,6 +134,7 @@ func (r *RecordedSamples) RecordFromMicrophone(stop chan struct{}) (string, erro
 	}
 
 	// Recording has started
+	var captured []int
 
 	// Wait for Enter in a goroutine
 	go func() {
@@ -143,14 +144,22 @@ func (r *RecordedSamples) RecordFromMicrophone(stop chan struct{}) (string, erro
 		// Give a moment for the last samples to be processed
 		time.Sleep(100 * time.Millisecond)
 		device.Stop()
+
+		r.mut.Lock()
+		captured = r.capturedSamples
+		r.mut.Unlock()
+
 		close(recordingDone)
 	}()
 
 	// Wait for recording to finish
 	<-recordingDone
 
+	// Prepend a second (works better)
+	captured = append(make([]int, 16000), captured...)
+
 	// Convert captured samples to WAV
-	err = saveAsWAV(tmpFile.Name(), r.capturedSamples, 16000)
+	err = saveAsWAV(tmpFile.Name(), captured, 16000)
 	if err != nil {
 		return "", fmt.Errorf("failed to save WAV file: %v", err)
 	}

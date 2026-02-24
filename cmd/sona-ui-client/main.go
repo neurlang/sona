@@ -137,10 +137,18 @@ func render(smoke *smoke, surface cairo.Surface) {
 	ctx := makeContextFromCairo(surface)
 
 
-	// Load system font (macOS uses Helvetica, Linux uses DejaVu Sans)
-	fontPath := "/System/Library/Fonts/Helvetica.ttc"
+	// Load system font with IPA support
+	// On macOS, try fonts with good Unicode/IPA coverage
+	fontPath := "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
 	if _, err := os.Stat(fontPath); os.IsNotExist(err) {
-		fontPath = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+		fontPath = "/System/Library/Fonts/SFNS.ttf" // SF Pro has excellent Unicode support
+		if _, err := os.Stat(fontPath); os.IsNotExist(err) {
+			fontPath = "/System/Library/Fonts/Menlo.ttc" // Menlo also has good IPA support
+			if _, err := os.Stat(fontPath); os.IsNotExist(err) {
+				// Fallback to Linux font
+				fontPath = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+			}
+		}
 	}
 	err := ctx.LoadFontFace(fontPath, float64(smoke.fontSize))
 	if err != nil {
